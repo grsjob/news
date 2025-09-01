@@ -4,8 +4,11 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "dev": "nodemon --legacy-watch src/index.ts",
-    "start": "ts-node src/index.ts"
+    "dev": "nodemon --legacy-watch --exec \"ts-node -r tsconfig-paths/register src/index.ts\"",
+    "start": "ts-node -r tsconfig-paths/register src/index.ts",
+    "build": "tsc",
+    "prod": "node -r tsconfig-paths/register dist/index.js",
+    "docker:dev": "docker-compose up --build"
   },
   "repository": {
     "type": "git",
@@ -18,10 +21,17 @@
   },
   "homepage": "https://github.com/grsjob/news#readme",
   "devDependencies": {
-    "@types/node": "24.3.0",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "@types/pg": "^8.15.5",
     "nodemon": "3.1.10",
     "prettier": "3.6.2",
     "ts-node": "10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "pg": "^8.16.3"
   }
 }

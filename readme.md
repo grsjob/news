@@ -21,6 +21,10 @@ NODE_ENV=development
 ```bash
     docker-compose up --build
 ```
+или 
+```bash
+    npm run docker:dev
+```
 4. Подождать пока поднимутся контейнеры
 5. Backend сервис будет доступен по значению переменной PORT. К базе можно будет подключиться напрямую из IDE по порту 5432
 

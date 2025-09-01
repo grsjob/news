@@ -8,6 +8,7 @@
 
     "strict": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
 
@@ -16,7 +17,11 @@
     "declaration": false,
 
     "removeComments": true,
-    "noEmitOnError": true
+    "noEmitOnError": true,
+    "baseUrl": "./",
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
   "include": [
     "src/**/*"

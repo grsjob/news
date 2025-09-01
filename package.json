@@ -1,0 +1,27 @@
+{
+  "name": "news",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "nodemon src/index.ts",
+    "start": "ts-node src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grsjob/news.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/grsjob/news/issues"
+  },
+  "homepage": "https://github.com/grsjob/news#readme",
+  "devDependencies": {
+    "@types/node": "24.3.0",
+    "nodemon": "3.1.10",
+    "prettier": "3.6.2",
+    "ts-node": "10.9.2",
+    "typescript": "5.9.2"
+  }
+}

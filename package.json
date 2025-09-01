@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.ts",
   "scripts": {
-    "dev": "nodemon src/index.ts",
+    "dev": "nodemon --legacy-watch src/index.ts",
     "start": "ts-node src/index.ts"
   },
   "repository": {

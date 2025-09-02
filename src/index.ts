@@ -7,6 +7,7 @@ import express, {
 import { router } from "./router";
 import { colorizedConsole } from "./helpers/console";
 import { healthCheck, pool } from "./config/db";
+import { DvpToSource } from "@/sources/DvpToSource";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -48,3 +49,13 @@ process.on("SIGINT", async () => {
   await pool.end();
   process.exit(0);
 });
+
+const dvpSource = new DvpToSource();
+(async () => {
+  try {
+    const articles = await dvpSource.fetchArticles(10);
+    colorizedConsole.accept(articles);
+  } catch (error) {
+    colorizedConsole.err(`Error: ${error}`);
+  }
+})();

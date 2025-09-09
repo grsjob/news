@@ -63,13 +63,6 @@ app.listen(PORT, async () => {
 
     const notificationConfig = {
       enabled: process.env.NOTIFICATIONS_ENABLED === "true",
-      telegram:
-        process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID
-          ? {
-              botToken: process.env.TELEGRAM_BOT_TOKEN,
-              chatId: process.env.TELEGRAM_CHAT_ID,
-            }
-          : undefined,
     };
 
     if (notificationConfig.enabled) {

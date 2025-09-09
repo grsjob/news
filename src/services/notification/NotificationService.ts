@@ -1,5 +1,6 @@
 import { colorizedConsole } from "@/helpers/console";
-import { INotificationService, INotificationConfig, ILLMResult } from "./types";
+import { INotificationService, INotificationConfig } from "./types";
+import { ILLMResult } from "@/services/llm";
 
 export class NotificationService implements INotificationService {
   private config: INotificationConfig;
@@ -17,10 +18,6 @@ export class NotificationService implements INotificationService {
     try {
       if (this.config.email) {
         await this.sendEmail(message);
-      }
-
-      if (this.config.telegram) {
-        await this.sendTelegram(message);
       }
 
       colorizedConsole.accept("Notification sent successfully");
@@ -79,26 +76,6 @@ ${result.jokes.map((joke: string) => `  • ${joke}`).join("\n")}
       colorizedConsole.accept(`Email content: ${message.substring(0, 100)}...`);
     } catch (error) {
       colorizedConsole.err(`Failed to send email: ${error}`);
-      throw error;
-    }
-  }
-
-  private async sendTelegram(message: string): Promise<void> {
-    if (!this.config.telegram) {
-      return;
-    }
-
-    try {
-      // Здесь должна быть логика отправки в Telegram
-      // Для примера просто выводим в консоль
-      colorizedConsole.accept(
-        `Telegram message would be sent to chat: ${this.config.telegram.chatId}`
-      );
-      colorizedConsole.accept(
-        `Telegram content: ${message.substring(0, 100)}...`
-      );
-    } catch (error) {
-      colorizedConsole.err(`Failed to send Telegram message: ${error}`);
       throw error;
     }
   }

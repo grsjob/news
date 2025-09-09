@@ -7,7 +7,8 @@ import express, {
 import { router } from "./router";
 import { colorizedConsole } from "./helpers/console";
 import { healthCheck, pool } from "./config/db";
-import { Sources } from "@/sources/Sources";
+import { Core } from "@/core/Core";
+import { NotificationService } from "@/services/notification";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,13 +26,13 @@ app.use(
     error: ErrorRequestHandler,
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ) => {
     const errorMessage =
       error instanceof Error ? error.message : "Internal server error";
     colorizedConsole.err(error);
     res.status(500).json({ error: errorMessage });
-  },
+  }
 );
 
 app.listen(PORT, async () => {
@@ -42,6 +43,66 @@ app.listen(PORT, async () => {
   if (!isHealthy) {
     colorizedConsole.warn("Warning: Database connection failed on startup");
   }
+
+  try {
+    const coreConfig = {
+      llm: {
+        apiKey: process.env.OPENROUTER_API_KEY || "your-api-key-here",
+        model: process.env.OPENROUTER_MODEL || "openai/gpt-3.5-turbo",
+        baseUrl: "https://openrouter.ai/api/v1",
+        maxTokens: 1000,
+        temperature: 0.7,
+      },
+      sources: {
+        defaultLimit: 10,
+      },
+    };
+
+    const core = new Core(coreConfig);
+    await core.initialize();
+
+    const notificationConfig = {
+      enabled: process.env.NOTIFICATIONS_ENABLED === "true",
+      telegram:
+        process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID
+          ? {
+              botToken: process.env.TELEGRAM_BOT_TOKEN,
+              chatId: process.env.TELEGRAM_CHAT_ID,
+            }
+          : undefined,
+    };
+
+    if (notificationConfig.enabled) {
+      const notificationService = new NotificationService(notificationConfig);
+      core.setNotificationService(notificationService);
+    }
+
+    const results = await core.fetchAndProcessNews(5);
+    colorizedConsole.accept(
+      `Successfully processed ${results.length} articles`
+    );
+
+    results.forEach((result, index) => {
+      colorizedConsole.accept(`\nArticle ${index + 1}:`);
+      colorizedConsole.accept(`Source: ${result.source}`);
+      colorizedConsole.accept(`Title: ${result.title}`);
+      colorizedConsole.accept(`Summary: ${result.summary}`);
+      colorizedConsole.accept(`Memes: ${result.memes.join(", ")}`);
+      colorizedConsole.accept(`Jokes: ${result.jokes.join(", ")}`);
+    });
+
+    const stats = core.getStatistics();
+    colorizedConsole.accept(`\nStatistics:`);
+    colorizedConsole.accept(
+      `Total articles processed: ${stats.totalArticlesProcessed}`
+    );
+    colorizedConsole.accept(`Sources count: ${stats.sourcesCount}`);
+    colorizedConsole.accept(`Core initialized: ${stats.isInitialized}`);
+  } catch (error) {
+    colorizedConsole.err(
+      `Error initializing core or processing news: ${error}`
+    );
+  }
 });
 
 process.on("SIGINT", async () => {
@@ -49,20 +110,3 @@ process.on("SIGINT", async () => {
   await pool.end();
   process.exit(0);
 });
-
-const sources = new Sources();
-(async () => {
-  try {
-    const allArticles = await sources.fetchAllArticles(10);
-    colorizedConsole.accept(`Fetched ${allArticles.length} articles total`);
-    
-    const llmInput = await sources.getNewsForLLM(5);
-    colorizedConsole.accept("LLM Input prepared successfully");
-    console.log(llmInput);
-    
-    const dvpArticles = await sources.fetchArticlesFromSource("DvpTo", 5);
-    colorizedConsole.accept(`Fetched ${dvpArticles.length} articles from DvpTo`);
-  } catch (error) {
-    colorizedConsole.err(`Error: ${error}`);
-  }
-})();

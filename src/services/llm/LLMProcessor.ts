@@ -1,14 +1,16 @@
+/** @format */
+
 import axios from "axios";
 import { colorizedConsole } from "@/helpers/console";
 import {
   ILLMProcessor,
   ILLMResult,
-  IOpenRouterConfig,
+  ICloudRuConfig,
   ILLMMessage,
   IArticle,
 } from "./types";
 
-interface OpenRouterResponse {
+interface CloudRuResponse {
   choices: Array<{
     message?: {
       content?: string;
@@ -16,17 +18,42 @@ interface OpenRouterResponse {
   }>;
 }
 
-const test = 1;
+// import os
+
+// from openai import OpenAI
+
+// api_key = os.environ["LLM_API_KEY"]
+// url = "https://foundation-models.api.cloud.ru/v1"
+
+// client = OpenAI(
+//     api_key=api_key,
+//     base_url=url
+// )
+
+// response = client.chat.completions.create(
+//     model="Qwen/Qwen3-Coder-480B-A35B-Instruct",
+//     max_tokens=5000,
+//     temperature=0.5,
+//     presence_penalty=0,
+//     top_p=0.95,
+//     messages=[
+//         {
+//             "role": "user",
+//             "content":"Как написать хороший код?"
+//         }
+//     ]
+// )
 export class LLMProcessor implements ILLMProcessor {
-  private config: IOpenRouterConfig;
+  private config: ICloudRuConfig;
   private processedResults: ILLMResult[] = [];
   private axiosInstance;
 
-  constructor(config: IOpenRouterConfig) {
+  constructor(config: ICloudRuConfig) {
     this.config = {
-      baseUrl: "https://openrouter.ai/api/v1",
-      maxTokens: 1000,
-      temperature: 0.7,
+      maxTokens: 5000,
+      temperature: 0.5,
+      presencePenalty: 0,
+      topP: 0.95,
       ...config,
     };
 
@@ -35,8 +62,6 @@ export class LLMProcessor implements ILLMProcessor {
       headers: {
         Authorization: `Bearer ${this.config.apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://github.com/grsjob/news",
-        "X-Title": "News Processor",
       },
     });
   }
@@ -114,13 +139,15 @@ export class LLMProcessor implements ILLMProcessor {
 
   private async callLLM(messages: ILLMMessage[]): Promise<string> {
     try {
-      const response = await this.axiosInstance.post<OpenRouterResponse>(
+      const response = await this.axiosInstance.post<CloudRuResponse>(
         "/chat/completions",
         {
           model: this.config.model,
           messages,
           max_tokens: this.config.maxTokens,
           temperature: this.config.temperature,
+          presence_penalty: this.config.presencePenalty,
+          top_p: this.config.topP,
         }
       );
 

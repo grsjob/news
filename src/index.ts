@@ -1,3 +1,5 @@
+/** @format */
+
 import express, {
   Response,
   Request,
@@ -47,11 +49,15 @@ app.listen(PORT, async () => {
   try {
     const coreConfig = {
       llm: {
-        apiKey: process.env.OPENROUTER_API_KEY || "your-api-key-here",
-        model: process.env.OPENROUTER_MODEL || "openai/gpt-3.5-turbo",
-        baseUrl: "https://openrouter.ai/api/v1",
-        maxTokens: 1000,
-        temperature: 0.7,
+        apiKey: process.env.LLM_API_KEY || "your-api-key-here",
+        model: process.env.LLM_MODEL || "Qwen/Qwen3-Coder-480B-A35B-Instruct",
+        baseUrl:
+          process.env.LLM_BASE_URL ||
+          "https://foundation-models.api.cloud.ru/v1",
+        maxTokens: 5000,
+        temperature: 0.5,
+        presencePenalty: 0,
+        topP: 0.95,
       },
       sources: {
         defaultLimit: 10,
@@ -63,6 +69,13 @@ app.listen(PORT, async () => {
 
     const notificationConfig = {
       enabled: process.env.NOTIFICATIONS_ENABLED === "true",
+      telegram:
+        process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID
+          ? {
+              botToken: process.env.TELEGRAM_BOT_TOKEN,
+              chatId: process.env.TELEGRAM_CHAT_ID,
+            }
+          : undefined,
     };
 
     if (notificationConfig.enabled) {

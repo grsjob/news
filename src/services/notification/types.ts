@@ -1,3 +1,5 @@
+/** @format */
+
 import { ILLMResult } from "@/services/llm";
 
 export interface INotificationService {
@@ -17,7 +19,13 @@ export interface IEmailConfig {
   to: string[];
 }
 
+export interface ITelegramConfig {
+  botToken: string;
+  chatId: string;
+}
+
 export interface INotificationConfig {
   email?: IEmailConfig;
+  telegram?: ITelegramConfig;
   enabled: boolean;
 }

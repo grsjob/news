@@ -1,12 +1,20 @@
+/** @format */
+
 import { colorizedConsole } from "@/helpers/console";
 import { INotificationService, INotificationConfig } from "./types";
 import { ILLMResult } from "@/services/llm";
+import { Telegraf } from "telegraf";
 
 export class NotificationService implements INotificationService {
   private config: INotificationConfig;
+  private telegramBot: Telegraf | null = null;
 
   constructor(config: INotificationConfig) {
     this.config = config;
+
+    if (this.config.telegram?.botToken) {
+      this.telegramBot = new Telegraf(this.config.telegram.botToken);
+    }
   }
 
   public async sendNotification(message: string): Promise<void> {
@@ -16,10 +24,22 @@ export class NotificationService implements INotificationService {
     }
 
     try {
+      const sendPromises: Promise<void>[] = [];
+
       if (this.config.email) {
-        await this.sendEmail(message);
+        sendPromises.push(this.sendEmail(message));
       }
 
+      if (this.config.telegram && this.telegramBot) {
+        sendPromises.push(this.sendTelegramMessage(message));
+      }
+
+      if (sendPromises.length === 0) {
+        colorizedConsole.warn("No notification channels configured");
+        return;
+      }
+
+      await Promise.all(sendPromises);
       colorizedConsole.accept("Notification sent successfully");
     } catch (error) {
       colorizedConsole.err(`Failed to send notification: ${error}`);
@@ -53,7 +73,7 @@ ${result.memes.map((meme: string) => `  • ${meme}`).join("\n")}
 ${result.jokes.map((joke: string) => `  • ${joke}`).join("\n")}
 
 ---
-      `.trim();
+        `.trim();
       })
       .join("\n\n");
 
@@ -80,8 +100,76 @@ ${result.jokes.map((joke: string) => `  • ${joke}`).join("\n")}
     }
   }
 
+  private async sendTelegramMessage(message: string): Promise<void> {
+    if (!this.telegramBot || !this.config.telegram?.chatId) {
+      return;
+    }
+
+    try {
+      // Split message if it's too long for Telegram (4096 characters limit)
+      const maxLength = 4096;
+      if (message.length <= maxLength) {
+        await this.telegramBot.telegram.sendMessage(
+          this.config.telegram.chatId,
+          message,
+          { parse_mode: "HTML" }
+        );
+      } else {
+        // Split into smaller parts
+        const parts = [];
+        let currentPart = "";
+
+        const lines = message.split("\n");
+        for (const line of lines) {
+          if (currentPart.length + line.length + 1 > maxLength) {
+            if (currentPart) {
+              parts.push(currentPart);
+              currentPart = line + "\n";
+            } else {
+              // Line is too long by itself, split it
+              const chunks = line.match(
+                new RegExp(`.{1,${maxLength}}`, "g")
+              ) || [line];
+              parts.push(...chunks);
+              currentPart = "";
+            }
+          } else {
+            currentPart += line + "\n";
+          }
+        }
+
+        if (currentPart) {
+          parts.push(currentPart);
+        }
+
+        // Send all parts
+        for (let i = 0; i < parts.length; i++) {
+          const partMessage = parts[i];
+          const partHeader =
+            parts.length > 1 ? `[Часть ${i + 1}/${parts.length}]\n` : "";
+          await this.telegramBot.telegram.sendMessage(
+            this.config.telegram.chatId,
+            partHeader + partMessage,
+            { parse_mode: "HTML" }
+          );
+        }
+      }
+
+      colorizedConsole.accept("Telegram message sent successfully");
+    } catch (error) {
+      colorizedConsole.err(`Failed to send Telegram message: ${error}`);
+      throw error;
+    }
+  }
+
   public updateConfig(config: Partial<INotificationConfig>): void {
     this.config = { ...this.config, ...config };
+
+    // Reinitialize Telegram bot if token changed
+    if (config.telegram?.botToken) {
+      this.telegramBot = new Telegraf(config.telegram.botToken);
+    }
+
     colorizedConsole.accept("Notification config updated");
   }
 

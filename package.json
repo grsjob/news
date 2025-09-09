@@ -21,19 +21,20 @@
   },
   "homepage": "https://github.com/grsjob/news#readme",
   "devDependencies": {
-    "@types/express": "^5.0.3",
-    "@types/node": "^24.3.0",
-    "@types/pg": "^8.15.5",
+    "@types/express": "5.0.3",
+    "@types/node": "24.3.0",
+    "@types/pg": "8.15.5",
     "nodemon": "3.1.10",
     "prettier": "3.6.2",
     "ts-node": "10.9.2",
-    "tsconfig-paths": "^4.2.0",
+    "tsconfig-paths": " 4.2.0",
     "typescript": "5.9.2"
   },
   "dependencies": {
-    "@types/axios": "^0.9.36",
-    "axios": "^1.11.0",
-    "express": "^5.1.0",
-    "pg": "^8.16.3"
+    "@types/axios": " 0.9.36",
+    "axios": " 1.11.0",
+    "express": " 5.1.0",
+    "pg": " 8.16.3",
+    "telegraf": " 4.16.3"
   }
 }

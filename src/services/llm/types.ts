@@ -1,3 +1,5 @@
+/** @format */
+
 import { IArticle } from "@/sources/types";
 
 export interface ILLMProcessor {
@@ -23,6 +25,16 @@ export interface IOpenRouterConfig {
   baseUrl?: string;
   maxTokens?: number;
   temperature?: number;
+}
+
+export interface ICloudRuConfig {
+  apiKey: string;
+  model: string;
+  baseUrl: string;
+  maxTokens?: number;
+  temperature?: number;
+  presencePenalty?: number;
+  topP?: number;
 }
 
 export interface ILLMMessage {

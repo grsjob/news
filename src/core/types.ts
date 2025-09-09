@@ -1,5 +1,11 @@
+/** @format */
+
 import { Sources } from "@/sources/Sources";
-import { LLMProcessor, ILLMResult, IOpenRouterConfig } from "@/services/llm";
+import {
+  LLMProcessor,
+  ILLMResult,
+  ICloudRuConfig as ILLMConfig,
+} from "@/services/llm";
 import { IArticle } from "@/sources/types";
 
 export interface ICore {
@@ -12,7 +18,7 @@ export interface ICore {
 }
 
 export interface ICoreConfig {
-  llm: IOpenRouterConfig;
+  llm: ILLMConfig;
   sources?: {
     defaultLimit?: number;
   };

@@ -18,31 +18,6 @@ interface CloudRuResponse {
   }>;
 }
 
-// import os
-
-// from openai import OpenAI
-
-// api_key = os.environ["LLM_API_KEY"]
-// url = "https://foundation-models.api.cloud.ru/v1"
-
-// client = OpenAI(
-//     api_key=api_key,
-//     base_url=url
-// )
-
-// response = client.chat.completions.create(
-//     model="Qwen/Qwen3-Coder-480B-A35B-Instruct",
-//     max_tokens=5000,
-//     temperature=0.5,
-//     presence_penalty=0,
-//     top_p=0.95,
-//     messages=[
-//         {
-//             "role": "user",
-//             "content":"Как написать хороший код?"
-//         }
-//     ]
-// )
 export class LLMProcessor implements ILLMProcessor {
   private config: ICloudRuConfig;
   private processedResults: ILLMResult[] = [];
@@ -95,6 +70,7 @@ export class LLMProcessor implements ILLMProcessor {
 
 Название: ${article.title}
 Источник: ${article.source}
+URL статьи: ${article.url}
 Дата публикации: ${article.publishedAt}
 Содержание: ${article.content}`;
   }
@@ -105,7 +81,6 @@ export class LLMProcessor implements ILLMProcessor {
     jokes: string[];
   } {
     try {
-      // Пытаемся найти JSON в ответе
       const jsonMatch = response.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         throw new Error("JSON not found in response");
@@ -113,7 +88,6 @@ export class LLMProcessor implements ILLMProcessor {
 
       const parsed = JSON.parse(jsonMatch[0]);
 
-      // Валидация структуры
       if (
         !parsed.summary ||
         !Array.isArray(parsed.memes) ||
@@ -148,7 +122,7 @@ export class LLMProcessor implements ILLMProcessor {
           temperature: this.config.temperature,
           presence_penalty: this.config.presencePenalty,
           top_p: this.config.topP,
-        }
+        },
       );
 
       return response.data.choices[0]?.message?.content || "";
@@ -173,6 +147,7 @@ export class LLMProcessor implements ILLMProcessor {
         articleId: article.id || this.generateId(),
         source: article.source,
         title: article.title,
+        url: article.url,
         summary: parsedResponse.summary,
         memes: parsedResponse.memes,
         jokes: parsedResponse.jokes,
@@ -183,7 +158,7 @@ export class LLMProcessor implements ILLMProcessor {
       return result;
     } catch (error) {
       colorizedConsole.err(
-        `Error processing article ${article.title}: ${error}`
+        `Error processing article ${article.title}: ${error}`,
       );
 
       const errorResult: ILLMResult = {
@@ -191,6 +166,7 @@ export class LLMProcessor implements ILLMProcessor {
         articleId: article.id || this.generateId(),
         source: article.source,
         title: article.title,
+        url: article.url,
         summary: "Ошибка при обработке статьи",
         memes: ["Ошибка"],
         jokes: ["Попробуйте позже"],
@@ -220,7 +196,7 @@ export class LLMProcessor implements ILLMProcessor {
 
     for (const chunk of chunks) {
       const chunkPromises = chunk.map((article) =>
-        this.processArticle(article)
+        this.processArticle(article),
       );
       const chunkResults = await Promise.all(chunkPromises);
       results.push(...chunkResults);
@@ -229,7 +205,7 @@ export class LLMProcessor implements ILLMProcessor {
     this.processedResults.push(...results);
 
     colorizedConsole.accept(
-      `Successfully processed ${results.length} articles`
+      `Successfully processed ${results.length} articles`,
     );
     return results;
   }

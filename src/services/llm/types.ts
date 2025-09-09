@@ -13,6 +13,7 @@ export interface ILLMResult {
   articleId: string;
   source: string;
   title: string;
+  url: string;
   summary: string;
   memes: string[];
   jokes: string[];

@@ -28,13 +28,13 @@ app.use(
     error: ErrorRequestHandler,
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     const errorMessage =
       error instanceof Error ? error.message : "Internal server error";
     colorizedConsole.err(error);
     res.status(500).json({ error: errorMessage });
-  }
+  },
 );
 
 app.listen(PORT, async () => {
@@ -85,7 +85,7 @@ app.listen(PORT, async () => {
 
     const results = await core.fetchAndProcessNews(5);
     colorizedConsole.accept(
-      `Successfully processed ${results.length} articles`
+      `Successfully processed ${results.length} articles`,
     );
 
     results.forEach((result, index) => {
@@ -95,18 +95,19 @@ app.listen(PORT, async () => {
       colorizedConsole.accept(`Summary: ${result.summary}`);
       colorizedConsole.accept(`Memes: ${result.memes.join(", ")}`);
       colorizedConsole.accept(`Jokes: ${result.jokes.join(", ")}`);
+      colorizedConsole.accept(`Url: ${result.url}`);
     });
 
     const stats = core.getStatistics();
     colorizedConsole.accept(`\nStatistics:`);
     colorizedConsole.accept(
-      `Total articles processed: ${stats.totalArticlesProcessed}`
+      `Total articles processed: ${stats.totalArticlesProcessed}`,
     );
     colorizedConsole.accept(`Sources count: ${stats.sourcesCount}`);
     colorizedConsole.accept(`Core initialized: ${stats.isInitialized}`);
   } catch (error) {
     colorizedConsole.err(
-      `Error initializing core or processing news: ${error}`
+      `Error initializing core or processing news: ${error}`,
     );
   }
 });

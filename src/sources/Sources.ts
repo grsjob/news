@@ -15,7 +15,7 @@ export class Sources {
     try {
       const dvpSource = new DvpToSource();
       this.sources.set(dvpSource.name, dvpSource);
-      
+
       this.initialized = true;
       colorizedConsole.accept(`Initialized ${this.sources.size} news sources`);
     } catch (error) {
@@ -32,7 +32,6 @@ export class Sources {
     return this.sources.get(name);
   }
 
- 
   public async fetchAllArticles(limit?: number): Promise<IArticle[]> {
     if (!this.initialized) {
       throw new Error("Sources not initialized");
@@ -41,7 +40,9 @@ export class Sources {
     const allArticles: IArticle[] = [];
     const fetchPromises: Promise<void>[] = [];
 
-    colorizedConsole.accept(`Fetching articles from ${this.sources.size} sources...`);
+    colorizedConsole.accept(
+      `Fetching articles from ${this.sources.size} sources...`
+    );
 
     for (const [sourceName, source] of this.sources) {
       fetchPromises.push(
@@ -49,40 +50,49 @@ export class Sources {
           try {
             colorizedConsole.accept(`Fetching articles from ${sourceName}...`);
             const articlesData = await source.fetchArticles(limit);
-            
+
             if (articlesData) {
               try {
                 const articles = JSON.parse(articlesData);
                 if (Array.isArray(articles)) {
-                  const articlesWithSource = articles.map(article => ({
+                  const articlesWithSource = articles.map((article) => ({
                     ...article,
-                    source: sourceName
+                    source: sourceName,
                   }));
                   allArticles.push(...articlesWithSource);
                 } else {
                   allArticles.push({
                     ...articles,
-                    source: sourceName
+                    source: sourceName,
                   });
                 }
               } catch (parseError) {
-                colorizedConsole.err(`Error parsing articles from ${sourceName}: ${parseError}`);
+                colorizedConsole.err(
+                  `Error parsing articles from ${sourceName}: ${parseError}`
+                );
               }
             }
           } catch (error) {
-            colorizedConsole.err(`Error fetching articles from ${sourceName}: ${error}`);
+            colorizedConsole.err(
+              `Error fetching articles from ${sourceName}: ${error}`
+            );
           }
         })()
       );
     }
 
     await Promise.all(fetchPromises);
-    
-    colorizedConsole.accept(`Successfully fetched ${allArticles.length} articles from all sources`);
+
+    colorizedConsole.accept(
+      `Successfully fetched ${allArticles.length} articles from all sources`
+    );
     return allArticles;
   }
 
-  public async fetchArticlesFromSource(sourceName: string, limit?: number): Promise<IArticle[]> {
+  public async fetchArticlesFromSource(
+    sourceName: string,
+    limit?: number
+  ): Promise<IArticle[]> {
     const source = this.sources.get(sourceName);
     if (!source) {
       throw new Error(`Source ${sourceName} not found`);
@@ -91,29 +101,35 @@ export class Sources {
     try {
       colorizedConsole.accept(`Fetching articles from ${sourceName}...`);
       const articlesData = await source.fetchArticles(limit);
-      
+
       if (articlesData) {
         try {
           const articles = JSON.parse(articlesData);
           if (Array.isArray(articles)) {
-            return articles.map(article => ({
+            return articles.map((article) => ({
               ...article,
-              source: sourceName
+              source: sourceName,
             }));
           } else {
-            return [{
-              ...articles,
-              source: sourceName
-            }];
+            return [
+              {
+                ...articles,
+                source: sourceName,
+              },
+            ];
           }
         } catch (parseError) {
-          colorizedConsole.err(`Error parsing articles from ${sourceName}: ${parseError}`);
+          colorizedConsole.err(
+            `Error parsing articles from ${sourceName}: ${parseError}`
+          );
           return [];
         }
       }
       return [];
     } catch (error) {
-      colorizedConsole.err(`Error fetching articles from ${sourceName}: ${error}`);
+      colorizedConsole.err(
+        `Error fetching articles from ${sourceName}: ${error}`
+      );
       throw error;
     }
   }
@@ -123,18 +139,20 @@ export class Sources {
       return "No articles available for processing.";
     }
 
-    const formattedArticles = articles.map((article, index) => {
-      return `
+    const formattedArticles = articles
+      .map((article, index) => {
+        return `
 Article ${index + 1}:
 Source: ${article.source}
 Title: ${article.title}
 URL: ${article.url}
 Published: ${article.publishedAt}
 Content: ${article.content}
-${article.tags ? `Tags: ${article.tags.join(', ')}` : ''}
+${article.tags ? `Tags: ${article.tags.join(", ")}` : ""}
 ---
       `.trim();
-    }).join('\n\n');
+      })
+      .join("\n\n");
 
     return `Here are the latest news articles for processing:\n\n${formattedArticles}`;
   }

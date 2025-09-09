@@ -1,3 +1,5 @@
+/** @format */
+
 import { colorizedConsole } from "@/helpers/console";
 import { Sources } from "@/sources/Sources";
 import { LLMProcessor } from "@/services/llm";
@@ -116,6 +118,17 @@ export class Core implements ICore {
       colorizedConsole.accept(
         `Successfully processed ${processedResults.length} articles from ${sourceName}`
       );
+
+      if (this.notificationService) {
+        try {
+          await this.notificationService.sendResults(processedResults);
+          colorizedConsole.accept("Notifications sent successfully");
+        } catch (notificationError) {
+          colorizedConsole.err(
+            `Failed to send notifications: ${notificationError}`
+          );
+        }
+      }
 
       return processedResults;
     } catch (error) {

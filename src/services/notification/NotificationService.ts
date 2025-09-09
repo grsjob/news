@@ -66,6 +66,7 @@ export class NotificationService implements INotificationService {
 📄 Статья ${index + 1}:
 🔗 Источник: ${result.source}
 📌 Заголовок: ${result.title}
+🌐 URL: ${result.url}
 📝 Краткое содержание: ${result.summary}
 
 😄 Мемы и шутки:
@@ -106,16 +107,13 @@ ${result.jokes.map((joke: string) => `  • ${joke}`).join("\n")}
     }
 
     try {
-      // Split message if it's too long for Telegram (4096 characters limit)
       const maxLength = 4096;
       if (message.length <= maxLength) {
         await this.telegramBot.telegram.sendMessage(
           this.config.telegram.chatId,
-          message,
-          { parse_mode: "HTML" }
+          message
         );
       } else {
-        // Split into smaller parts
         const parts = [];
         let currentPart = "";
 
@@ -126,7 +124,6 @@ ${result.jokes.map((joke: string) => `  • ${joke}`).join("\n")}
               parts.push(currentPart);
               currentPart = line + "\n";
             } else {
-              // Line is too long by itself, split it
               const chunks = line.match(
                 new RegExp(`.{1,${maxLength}}`, "g")
               ) || [line];
@@ -142,15 +139,13 @@ ${result.jokes.map((joke: string) => `  • ${joke}`).join("\n")}
           parts.push(currentPart);
         }
 
-        // Send all parts
         for (let i = 0; i < parts.length; i++) {
           const partMessage = parts[i];
           const partHeader =
             parts.length > 1 ? `[Часть ${i + 1}/${parts.length}]\n` : "";
           await this.telegramBot.telegram.sendMessage(
             this.config.telegram.chatId,
-            partHeader + partMessage,
-            { parse_mode: "HTML" }
+            partHeader + partMessage
           );
         }
       }
@@ -165,7 +160,6 @@ ${result.jokes.map((joke: string) => `  • ${joke}`).join("\n")}
   public updateConfig(config: Partial<INotificationConfig>): void {
     this.config = { ...this.config, ...config };
 
-    // Reinitialize Telegram bot if token changed
     if (config.telegram?.botToken) {
       this.telegramBot = new Telegraf(config.telegram.botToken);
     }

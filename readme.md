@@ -12,10 +12,16 @@
 ```text
 POSTGRES_USER=
 POSTGRES_PASSWORD=
-POSTGRES_DB=
-DATABASE_URL=postgresql://пользователь:пароль@postgres:5432/название базы
-PORT=
+POSTGRES_DB=название базы
+DATABASE_URL=postgresql://имя пользователя:пароль@postgres:5432/название базы
+PORT=3000
 NODE_ENV=development
+LLM_MODEL=модель, через которую будут обрабатываться новости
+LLM_BASE_URL=URL для модели
+LLM_API_KEY=ключ доступа
+TELEGRAM_BOT_TOKEN=токен для запросов в telegram
+TELEGRAM_CHAT_ID=ваш id пользователя telegram
+NOTIFICATIONS_ENABLED=true
 ```
 3. выполнить команду в терминале 
 ```bash

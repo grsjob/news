@@ -1,3 +1,5 @@
+/** @format */
+
 import { colorizedConsole } from "@/helpers/console";
 import { Core, ICoreConfig } from "@/core";
 

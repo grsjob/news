@@ -14,7 +14,7 @@ export class DvpToSource extends BaseSource {
       );
       if (response.ok) {
         const articles = (await response.json()) as IArticle[];
-        return JSON.stringify(articles[1].description);
+        return JSON.stringify(articles);
       }
     } catch (error) {
       colorizedConsole.err(`Error fetching articles: ${error}`);

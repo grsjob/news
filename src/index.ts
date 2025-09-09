@@ -7,7 +7,7 @@ import express, {
 import { router } from "./router";
 import { colorizedConsole } from "./helpers/console";
 import { healthCheck, pool } from "./config/db";
-import { DvpToSource } from "@/sources/DvpToSource";
+import { Sources } from "@/sources/Sources";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,11 +50,18 @@ process.on("SIGINT", async () => {
   process.exit(0);
 });
 
-const dvpSource = new DvpToSource();
+const sources = new Sources();
 (async () => {
   try {
-    const articles = await dvpSource.fetchArticles(10);
-    colorizedConsole.accept(articles);
+    const allArticles = await sources.fetchAllArticles(10);
+    colorizedConsole.accept(`Fetched ${allArticles.length} articles total`);
+    
+    const llmInput = await sources.getNewsForLLM(5);
+    colorizedConsole.accept("LLM Input prepared successfully");
+    console.log(llmInput);
+    
+    const dvpArticles = await sources.fetchArticlesFromSource("DvpTo", 5);
+    colorizedConsole.accept(`Fetched ${dvpArticles.length} articles from DvpTo`);
   } catch (error) {
     colorizedConsole.err(`Error: ${error}`);
   }

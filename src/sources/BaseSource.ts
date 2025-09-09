@@ -1,5 +1,6 @@
 import { ISource, IArticle } from "@/sources/types";
 import { colorizedConsole } from "@/helpers/console";
+import axiosInstance from "@/config/axios";
 
 export abstract class BaseSource implements ISource {
   abstract readonly name: string;
@@ -14,8 +15,8 @@ export abstract class BaseSource implements ISource {
 
   // protected async fetchHtml(url: string): Promise<string> {
   //   try {
-  //     const response = await fetch(url);
-  //     return await response.text();
+  //     const response = await axiosInstance.get(url);
+  //     return response.data;
   //   } catch (error) {
   //     colorizedConsole.err(`Error fetching HTML from ${url}:${error}`);
   //     throw error;

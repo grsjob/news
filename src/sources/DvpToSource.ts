@@ -1,6 +1,7 @@
 import { BaseSource } from "@/sources/BaseSource";
 import { IArticle } from "@/sources/types";
 import { colorizedConsole } from "@/helpers/console";
+import axiosInstance from "@/config/axios";
 
 export class DvpToSource extends BaseSource {
   readonly name = "DvpTo";
@@ -8,12 +9,11 @@ export class DvpToSource extends BaseSource {
 
   async fetchArticles(limit: number = 10): Promise<string> {
     try {
-      //TODO заменить а axios и добавить заголовок api-key
-      const response = await fetch(
-        `${this.baseUrl}?page=1&per_page=${limit}&tag=javascript`,
+      const response = await axiosInstance.get(
+        `${this.baseUrl}?page=1&per_page=${limit}&tag=javascript`
       );
-      if (response.ok) {
-        const articles = (await response.json()) as IArticle[];
+      if (response.status === 200) {
+        const articles = response.data as IArticle[];
         return JSON.stringify(articles);
       }
     } catch (error) {

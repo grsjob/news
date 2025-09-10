@@ -1,3 +1,5 @@
+/** @format */
+
 import { BaseSource } from "@/sources/BaseSource";
 import { IArticle } from "@/sources/types";
 import { colorizedConsole } from "@/helpers/console";
@@ -7,11 +9,23 @@ export class DvpToSource extends BaseSource {
   readonly name = "DvpTo";
   readonly baseUrl = "https://dev.to/api/articles/latest";
 
-  async fetchArticles(limit: number = 10): Promise<string> {
+  async fetchArticles(limit?: number): Promise<string> {
     try {
-      const response = await axiosInstance.get(
-        `${this.baseUrl}?page=1&per_page=${limit}&tag=javascript`,
-      );
+      const queryParams = new URLSearchParams({
+        page: "1",
+        tag: "javascript",
+      });
+
+      queryParams.append("tag", "react");
+      queryParams.append("tag", "typescript");
+
+      if (limit !== undefined) {
+        queryParams.append("per_page", limit.toString());
+      }
+
+      const url = `${this.baseUrl}?${queryParams.toString()}`;
+      const response = await axiosInstance.get(url);
+
       if (response.status === 200) {
         const articles = response.data as IArticle[];
         return JSON.stringify(articles);

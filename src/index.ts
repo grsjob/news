@@ -60,9 +60,6 @@ app.listen(PORT, async () => {
         presencePenalty: 0,
         topP: 0.95,
       },
-      sources: {
-        defaultLimit: 10,
-      },
     };
 
     const core = new Core(coreConfig);

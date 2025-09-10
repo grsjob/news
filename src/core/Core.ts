@@ -5,6 +5,7 @@ import { Sources } from "@/sources/Sources";
 import { LLMProcessor } from "@/services/llm";
 import { ICore, ICoreConfig, INotificationService } from "./types";
 import { ILLMResult, IArticle } from "@/services/llm";
+import { ArticlesDB } from "@/db/articles.db";
 
 export class Core implements ICore {
   private sources: Sources;
@@ -12,11 +13,13 @@ export class Core implements ICore {
   private notificationService?: INotificationService;
   private config: ICoreConfig;
   private initialized: boolean = false;
+  private articlesDB: ArticlesDB;
 
   constructor(config: ICoreConfig) {
     this.config = config;
     this.sources = new Sources();
     this.llmProcessor = new LLMProcessor(config.llm);
+    this.articlesDB = new ArticlesDB();
   }
 
   public async initialize(): Promise<void> {
@@ -31,10 +34,25 @@ export class Core implements ICore {
         throw new Error("LLM model is required");
       }
 
+      await this.articlesDB.initializeTable();
+
+      await this.cleanupOldArticles();
+
       colorizedConsole.accept("Core initialized successfully");
       this.initialized = true;
     } catch (error) {
       colorizedConsole.err(`Failed to initialize Core: ${error}`);
+      throw error;
+    }
+  }
+
+  public async cleanupOldArticles(days: number = 30): Promise<number> {
+    try {
+      const deletedCount = await this.articlesDB.deleteOldArticles(days);
+      colorizedConsole.accept(`Cleaned up ${deletedCount} old articles`);
+      return deletedCount;
+    } catch (error) {
+      colorizedConsole.err(`Error cleaning up old articles: ${error}`);
       throw error;
     }
   }
@@ -56,21 +74,44 @@ export class Core implements ICore {
         return [];
       }
 
+      const uniqueArticles: IArticle[] = [];
+      for (const article of articles) {
+        const exists = await this.articlesDB.articleExistsByUrl(article.url);
+        if (!exists) {
+          await this.articlesDB.saveArticle(article);
+          uniqueArticles.push(article);
+        } else {
+          colorizedConsole.warn(`Skipping duplicate article: ${article.title}`);
+        }
+      }
+
+      if (!uniqueArticles.length) {
+        colorizedConsole.warn("No new articles to process after deduplication");
+        return [];
+      }
+
       colorizedConsole.accept(
-        `Fetched ${articles.length} articles from sources`
+        `Fetched ${articles.length} articles, ${uniqueArticles.length} are unique`
       );
 
       const processedResults =
-        await this.llmProcessor.processArticles(articles);
+        await this.llmProcessor.processArticles(uniqueArticles);
 
       colorizedConsole.accept(
         `Successfully processed ${processedResults.length} articles`
       );
 
-      if (this.notificationService) {
+      if (this.notificationService && processedResults.length > 0) {
         try {
           await this.notificationService.sendResults(processedResults);
-          colorizedConsole.accept("Notifications sent successfully");
+
+          for (const result of processedResults) {
+            await this.articlesDB.markArticleAsSent(result.url);
+          }
+
+          colorizedConsole.accept(
+            "Notifications sent successfully and articles marked as sent"
+          );
         } catch (notificationError) {
           colorizedConsole.err(
             `Failed to send notifications: ${notificationError}`
@@ -108,21 +149,44 @@ export class Core implements ICore {
         return [];
       }
 
+      const uniqueArticles: IArticle[] = [];
+      for (const article of articles) {
+        const exists = await this.articlesDB.articleExistsByUrl(article.url);
+        if (!exists) {
+          await this.articlesDB.saveArticle(article);
+          uniqueArticles.push(article);
+        } else {
+          colorizedConsole.warn(`Skipping duplicate article: ${article.title}`);
+        }
+      }
+
+      if (!uniqueArticles.length) {
+        colorizedConsole.warn("No new articles to process after deduplication");
+        return [];
+      }
+
       colorizedConsole.accept(
-        `Fetched ${articles.length} articles from ${sourceName}`
+        `Fetched ${articles.length} articles from ${sourceName}, ${uniqueArticles.length} are unique`
       );
 
       const processedResults =
-        await this.llmProcessor.processArticles(articles);
+        await this.llmProcessor.processArticles(uniqueArticles);
 
       colorizedConsole.accept(
         `Successfully processed ${processedResults.length} articles from ${sourceName}`
       );
 
-      if (this.notificationService) {
+      if (this.notificationService && processedResults.length > 0) {
         try {
           await this.notificationService.sendResults(processedResults);
-          colorizedConsole.accept("Notifications sent successfully");
+
+          for (const result of processedResults) {
+            await this.articlesDB.markArticleAsSent(result.url);
+          }
+
+          colorizedConsole.accept(
+            "Notifications sent successfully and articles marked as sent"
+          );
         } catch (notificationError) {
           colorizedConsole.err(
             `Failed to send notifications: ${notificationError}`

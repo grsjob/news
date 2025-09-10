@@ -11,6 +11,7 @@ import { colorizedConsole } from "./helpers/console";
 import { healthCheck, pool } from "./config/db";
 import { Core } from "@/core/Core";
 import { NotificationService } from "@/services/notification";
+import { SchedulerService } from "@/services/scheduler";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -28,13 +29,13 @@ app.use(
     error: ErrorRequestHandler,
     req: Request,
     res: Response,
-    next: NextFunction,
+    next: NextFunction
   ) => {
     const errorMessage =
       error instanceof Error ? error.message : "Internal server error";
     colorizedConsole.err(error);
     res.status(500).json({ error: errorMessage });
-  },
+  }
 );
 
 app.listen(PORT, async () => {
@@ -65,7 +66,6 @@ app.listen(PORT, async () => {
     };
 
     const core = new Core(coreConfig);
-    await core.initialize();
 
     const notificationConfig = {
       enabled: process.env.NOTIFICATIONS_ENABLED === "true",
@@ -83,31 +83,26 @@ app.listen(PORT, async () => {
       core.setNotificationService(notificationService);
     }
 
-    const results = await core.fetchAndProcessNews(5);
-    colorizedConsole.accept(
-      `Successfully processed ${results.length} articles`,
-    );
+    await core.initialize();
 
-    results.forEach((result, index) => {
-      colorizedConsole.accept(`\nArticle ${index + 1}:`);
-      colorizedConsole.accept(`Source: ${result.source}`);
-      colorizedConsole.accept(`Title: ${result.title}`);
-      colorizedConsole.accept(`Summary: ${result.summary}`);
-      colorizedConsole.accept(`Memes: ${result.memes.join(", ")}`);
-      colorizedConsole.accept(`Jokes: ${result.jokes.join(", ")}`);
-      colorizedConsole.accept(`Url: ${result.url}`);
-    });
+    const schedulerConfig = {
+      enabled: true,
+      scheduleTime: "0 7 * * *", // 10 утра по Москве (7 AM UTC)
+    };
+
+    const schedulerService = new SchedulerService(schedulerConfig, core);
+    schedulerService.start();
 
     const stats = core.getStatistics();
     colorizedConsole.accept(`\nStatistics:`);
     colorizedConsole.accept(
-      `Total articles processed: ${stats.totalArticlesProcessed}`,
+      `Total articles processed: ${stats.totalArticlesProcessed}`
     );
     colorizedConsole.accept(`Sources count: ${stats.sourcesCount}`);
     colorizedConsole.accept(`Core initialized: ${stats.isInitialized}`);
   } catch (error) {
     colorizedConsole.err(
-      `Error initializing core or processing news: ${error}`,
+      `Error initializing core or processing news: ${error}`
     );
   }
 });

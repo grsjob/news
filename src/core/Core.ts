@@ -38,6 +38,8 @@ export class Core implements ICore {
 
       await this.cleanupOldArticles();
 
+      await this._fetchAndProcessNewsInternal();
+
       colorizedConsole.accept("Core initialized successfully");
       this.initialized = true;
     } catch (error) {
@@ -62,6 +64,12 @@ export class Core implements ICore {
       throw new Error("Core is not initialized");
     }
 
+    return this._fetchAndProcessNewsInternal(limit);
+  }
+
+  private async _fetchAndProcessNewsInternal(
+    limit?: number
+  ): Promise<ILLMResult[]> {
     try {
       colorizedConsole.accept("Starting news processing...");
 

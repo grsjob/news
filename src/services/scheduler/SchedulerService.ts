@@ -22,10 +22,10 @@ export class SchedulerService implements ISchedulerService {
     }
 
     try {
-      //10 утра по Москве
+      //9 утра по Москве
       this.task = cron.schedule(this.config.scheduleTime, async () => {
         colorizedConsole.accept(
-          "Running scheduled task: Fetch articles and cleanup"
+          "Running scheduled task: Fetch articles and cleanup",
         );
         await this.runScheduledTask();
       });
@@ -48,13 +48,13 @@ export class SchedulerService implements ISchedulerService {
     try {
       const deletedCount = await this.core.cleanupOldArticles(30);
       colorizedConsole.accept(
-        `Cleaned up ${deletedCount} old articles during scheduled task`
+        `Cleaned up ${deletedCount} old articles during scheduled task`,
       );
 
       const results = await this.core.fetchAndProcessNews();
 
       colorizedConsole.accept(
-        `Scheduled task completed: ${results.length} new articles processed`
+        `Scheduled task completed: ${results.length} new articles processed`,
       );
     } catch (error) {
       colorizedConsole.err(`Error in scheduled task: ${error}`);

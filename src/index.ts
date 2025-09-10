@@ -29,13 +29,13 @@ app.use(
     error: ErrorRequestHandler,
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ) => {
     const errorMessage =
       error instanceof Error ? error.message : "Internal server error";
     colorizedConsole.err(error);
     res.status(500).json({ error: errorMessage });
-  }
+  },
 );
 
 app.listen(PORT, async () => {
@@ -84,7 +84,7 @@ app.listen(PORT, async () => {
 
     const schedulerConfig = {
       enabled: true,
-      scheduleTime: "0 7 * * *", // 10 утра по Москве (7 AM UTC)
+      scheduleTime: "0 6 * * *", // 9 утра по Москве (7 AM UTC)
     };
 
     const schedulerService = new SchedulerService(schedulerConfig, core);
@@ -93,13 +93,13 @@ app.listen(PORT, async () => {
     const stats = core.getStatistics();
     colorizedConsole.accept(`\nStatistics:`);
     colorizedConsole.accept(
-      `Total articles processed: ${stats.totalArticlesProcessed}`
+      `Total articles processed: ${stats.totalArticlesProcessed}`,
     );
     colorizedConsole.accept(`Sources count: ${stats.sourcesCount}`);
     colorizedConsole.accept(`Core initialized: ${stats.isInitialized}`);
   } catch (error) {
     colorizedConsole.err(
-      `Error initializing core or processing news: ${error}`
+      `Error initializing core or processing news: ${error}`,
     );
   }
 });

@@ -4,8 +4,6 @@ import { IArticle } from "@/sources/types";
 
 export interface ILLMProcessor {
   processArticles(articles: IArticle[]): Promise<ILLMResult[]>;
-  getProcessedResults(): ILLMResult[];
-  clearResults(): void;
 }
 
 export interface ILLMResult {

@@ -1,20 +1,10 @@
 /** @format */
 
-import { Sources } from "@/sources/Sources";
-import {
-  LLMProcessor,
-  ILLMResult,
-  ICloudRuConfig as ILLMConfig,
-} from "@/services/llm";
-import { IArticle } from "@/sources/types";
+import { ILLMResult, ICloudRuConfig as ILLMConfig } from "@/services/llm";
 
 export interface ICore {
   initialize(): Promise<void>;
   fetchAndProcessNews(limit?: number): Promise<ILLMResult[]>;
-  getProcessedResults(): ILLMResult[];
-  clearResults(): void;
-  getSources(): Sources;
-  getLLMProcessor(): LLMProcessor;
 }
 
 export interface ICoreConfig {

@@ -210,15 +210,6 @@ URL статьи: ${article.url}
     return results;
   }
 
-  public getProcessedResults(): ILLMResult[] {
-    return [...this.processedResults];
-  }
-
-  public clearResults(): void {
-    this.processedResults = [];
-    colorizedConsole.accept("LLM processed results cleared");
-  }
-
   public getResultsCount(): number {
     return this.processedResults.length;
   }

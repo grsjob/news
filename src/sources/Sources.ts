@@ -28,10 +28,6 @@ export class Sources {
     return Array.from(this.sources.values());
   }
 
-  public getSource(name: string): ISource | undefined {
-    return this.sources.get(name);
-  }
-
   public async fetchAllArticles(limit?: number): Promise<IArticle[]> {
     if (!this.initialized) {
       throw new Error("Sources not initialized");
@@ -41,7 +37,7 @@ export class Sources {
     const fetchPromises: Promise<void>[] = [];
 
     colorizedConsole.accept(
-      `Fetching articles from ${this.sources.size} sources...`
+      `Fetching articles from ${this.sources.size} sources...`,
     );
 
     for (const [sourceName, source] of this.sources) {
@@ -68,97 +64,24 @@ export class Sources {
                 }
               } catch (parseError) {
                 colorizedConsole.err(
-                  `Error parsing articles from ${sourceName}: ${parseError}`
+                  `Error parsing articles from ${sourceName}: ${parseError}`,
                 );
               }
             }
           } catch (error) {
             colorizedConsole.err(
-              `Error fetching articles from ${sourceName}: ${error}`
+              `Error fetching articles from ${sourceName}: ${error}`,
             );
           }
-        })()
+        })(),
       );
     }
 
     await Promise.all(fetchPromises);
 
     colorizedConsole.accept(
-      `Successfully fetched ${allArticles.length} articles from all sources`
+      `Successfully fetched ${allArticles.length} articles from all sources`,
     );
     return allArticles;
-  }
-
-  public async fetchArticlesFromSource(
-    sourceName: string,
-    limit?: number
-  ): Promise<IArticle[]> {
-    const source = this.sources.get(sourceName);
-    if (!source) {
-      throw new Error(`Source ${sourceName} not found`);
-    }
-
-    try {
-      colorizedConsole.accept(`Fetching articles from ${sourceName}...`);
-      const articlesData = await source.fetchArticles(limit);
-
-      if (articlesData) {
-        try {
-          const articles = JSON.parse(articlesData);
-          if (Array.isArray(articles)) {
-            return articles.map((article) => ({
-              ...article,
-              source: sourceName,
-            }));
-          } else {
-            return [
-              {
-                ...articles,
-                source: sourceName,
-              },
-            ];
-          }
-        } catch (parseError) {
-          colorizedConsole.err(
-            `Error parsing articles from ${sourceName}: ${parseError}`
-          );
-          return [];
-        }
-      }
-      return [];
-    } catch (error) {
-      colorizedConsole.err(
-        `Error fetching articles from ${sourceName}: ${error}`
-      );
-      throw error;
-    }
-  }
-
-  public prepareForLLM(articles: IArticle[]): string {
-    if (!articles.length) {
-      return "No articles available for processing.";
-    }
-
-    const formattedArticles = articles
-      .map((article, index) => {
-        return `
-Article ${index + 1}:
-Source: ${article.source}
-Title: ${article.title}
-URL: ${article.url}
-Published: ${article.publishedAt}
-Content: ${article.content}
-${article.tags ? `Tags: ${article.tags.join(", ")}` : ""}
----
-      `.trim();
-      })
-      .join("\n\n");
-
-    return `Here are the latest news articles for processing:\n\n${formattedArticles}`;
-  }
-
-  public async getNewsForLLM(limit?: number): Promise<string> {
-    const articles = await this.fetchAllArticles(limit);
-    return this.prepareForLLM(articles);
   }
 }

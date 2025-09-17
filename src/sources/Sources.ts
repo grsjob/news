@@ -1,6 +1,9 @@
+/** @format */
+
 import { ISource, IArticle } from "@/sources/types";
 import { BaseSource } from "@/sources/BaseSource";
 import { DvpToSource } from "@/sources/DvpToSource";
+import { TelegramSource } from "@/sources/TelegramSource";
 import { colorizedConsole } from "@/helpers/console";
 
 export class Sources {
@@ -15,6 +18,11 @@ export class Sources {
     try {
       const dvpSource = new DvpToSource();
       this.sources.set(dvpSource.name, dvpSource);
+
+      // Initialize Telegram source with a sample channel
+      const telegramChannels = ["tproger_web"];
+      const telegramSource = new TelegramSource(telegramChannels);
+      this.sources.set(telegramSource.name, telegramSource);
 
       this.initialized = true;
       colorizedConsole.accept(`Initialized ${this.sources.size} news sources`);
@@ -37,7 +45,7 @@ export class Sources {
     const fetchPromises: Promise<void>[] = [];
 
     colorizedConsole.accept(
-      `Fetching articles from ${this.sources.size} sources...`,
+      `Fetching articles from ${this.sources.size} sources...`
     );
 
     for (const [sourceName, source] of this.sources) {
@@ -64,23 +72,23 @@ export class Sources {
                 }
               } catch (parseError) {
                 colorizedConsole.err(
-                  `Error parsing articles from ${sourceName}: ${parseError}`,
+                  `Error parsing articles from ${sourceName}: ${parseError}`
                 );
               }
             }
           } catch (error) {
             colorizedConsole.err(
-              `Error fetching articles from ${sourceName}: ${error}`,
+              `Error fetching articles from ${sourceName}: ${error}`
             );
           }
-        })(),
+        })()
       );
     }
 
     await Promise.all(fetchPromises);
 
     colorizedConsole.accept(
-      `Successfully fetched ${allArticles.length} articles from all sources`,
+      `Successfully fetched ${allArticles.length} articles from all sources`
     );
     return allArticles;
   }

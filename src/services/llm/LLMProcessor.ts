@@ -122,7 +122,7 @@ URL статьи: ${article.url}
           temperature: this.config.temperature,
           presence_penalty: this.config.presencePenalty,
           top_p: this.config.topP,
-        },
+        }
       );
 
       return response.data.choices[0]?.message?.content || "";
@@ -158,7 +158,7 @@ URL статьи: ${article.url}
       return result;
     } catch (error) {
       colorizedConsole.err(
-        `Error processing article ${article.title}: ${error}`,
+        `Error processing article ${article.title}: ${error}`
       );
 
       const errorResult: ILLMResult = {
@@ -196,7 +196,7 @@ URL статьи: ${article.url}
 
     for (const chunk of chunks) {
       const chunkPromises = chunk.map((article) =>
-        this.processArticle(article),
+        this.processArticle(article)
       );
       const chunkResults = await Promise.all(chunkPromises);
       results.push(...chunkResults);
@@ -205,12 +205,58 @@ URL статьи: ${article.url}
     this.processedResults.push(...results);
 
     colorizedConsole.accept(
-      `Successfully processed ${results.length} articles`,
+      `Successfully processed ${results.length} articles`
     );
     return results;
   }
 
   public getResultsCount(): number {
     return this.processedResults.length;
+  }
+
+  public async generateTitle(article: IArticle): Promise<string> {
+    try {
+      const messages: ILLMMessage[] = [
+        { role: "system", content: this.createTitleSystemPrompt() },
+        { role: "user", content: this.createTitleUserPrompt(article) },
+      ];
+
+      const response = await this.callLLM(messages);
+
+      let title = response.trim();
+
+      if (title.startsWith('"') && title.endsWith('"')) {
+        title = title.slice(1, -1);
+      }
+
+      if (title.length > 100) {
+        title = title.substring(0, 97) + "...";
+      }
+
+      colorizedConsole.accept(`Generated title: ${title}`);
+      return title;
+    } catch (error) {
+      colorizedConsole.err(`Error generating title: ${error}`);
+      return `Telegram Post from ${new Date(article.publishedAt).toLocaleDateString()}`;
+    }
+  }
+
+  private createTitleSystemPrompt(): string {
+    return `Ты - опытный журналист. Твоя задача - создавать информативные и привлекательные заголовки для текстов постов.
+
+Твоя работа:
+1. Прочитать текст поста
+2. Создать краткий, но информативный заголовок (не более 100 символов)
+3. Заголовок должен отражать основную суть поста
+4. Отвечай только заголовком, без дополнительного текста и кавычек`;
+  }
+
+  private createTitleUserPrompt(article: IArticle): string {
+    return `Создай заголовок для следующего Telegram поста:
+
+Источник: ${article.source}
+URL поста: ${article.url}
+Дата публикации: ${article.publishedAt}
+Текст поста: ${article.content}`;
   }
 }

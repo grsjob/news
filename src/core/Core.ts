@@ -68,13 +68,13 @@ export class Core implements ICore {
   }
 
   private async _fetchAndProcessNewsInternal(
-    limit?: number,
+    limit?: number
   ): Promise<ILLMResult[]> {
     try {
       colorizedConsole.accept("Starting news processing...");
 
       const articles = await this.sources.fetchAllArticles(
-        limit || this.config.sources?.defaultLimit,
+        limit || this.config.sources?.defaultLimit
       );
 
       if (!articles.length) {
@@ -82,8 +82,10 @@ export class Core implements ICore {
         return [];
       }
 
+      const articlesWithTitle = await this.generateMissingTitles(articles);
+
       const uniqueArticles: IArticle[] = [];
-      for (const article of articles) {
+      for (const article of articlesWithTitle) {
         const exists = await this.articlesDB.articleExistsByUrl(article.url);
         if (!exists) {
           await this.articlesDB.saveArticle(article);
@@ -99,14 +101,14 @@ export class Core implements ICore {
       }
 
       colorizedConsole.accept(
-        `Fetched ${articles.length} articles, ${uniqueArticles.length} are unique`,
+        `Fetched ${articles.length} articles, ${uniqueArticles.length} are unique`
       );
 
       const processedResults =
-        await this.llmProcessor.processArticles(uniqueArticles);
+        await this.llmProcessor.processArticles(articlesWithTitle);
 
       colorizedConsole.accept(
-        `Successfully processed ${processedResults.length} articles`,
+        `Successfully processed ${processedResults.length} articles`
       );
 
       if (this.notificationService && processedResults.length > 0) {
@@ -118,11 +120,11 @@ export class Core implements ICore {
           }
 
           colorizedConsole.accept(
-            "Notifications sent successfully and articles marked as sent",
+            "Notifications sent successfully and articles marked as sent"
           );
         } catch (notificationError) {
           colorizedConsole.err(
-            `Failed to send notifications: ${notificationError}`,
+            `Failed to send notifications: ${notificationError}`
           );
         }
       }
@@ -134,8 +136,39 @@ export class Core implements ICore {
     }
   }
 
+  private async generateMissingTitles(
+    articles: IArticle[]
+  ): Promise<IArticle[]> {
+    const articlesWithTitle: IArticle[] = [];
+
+    for (const article of articles) {
+      if (!article.title || article.title.trim() === "") {
+        try {
+          colorizedConsole.accept(
+            `Generating title for article from ${article.source}`
+          );
+          const generatedTitle = await this.llmProcessor.generateTitle(article);
+          articlesWithTitle.push({
+            ...article,
+            title: generatedTitle,
+          });
+        } catch (error) {
+          colorizedConsole.err(`Error generating title for article: ${error}`);
+          articlesWithTitle.push({
+            ...article,
+            title: `Telegram Post from ${new Date(article.publishedAt).toLocaleDateString()}`,
+          });
+        }
+      } else {
+        articlesWithTitle.push(article);
+      }
+    }
+
+    return articlesWithTitle;
+  }
+
   public setNotificationService(
-    notificationService: INotificationService,
+    notificationService: INotificationService
   ): void {
     this.notificationService = notificationService;
     colorizedConsole.accept("Notification service set");

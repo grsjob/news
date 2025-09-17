@@ -1,4 +1,6 @@
-version: '3.8'
+# @format
+
+version: "3.8"
 
 services:
   postgres:
@@ -31,6 +33,7 @@ services:
       NODE_ENV: ${NODE_ENV}
       DATABASE_URL: ${DATABASE_URL}
       PORT: ${PORT}
+      DB_HOST: postgres
     ports:
       - "${PORT}:${PORT}"
     volumes:

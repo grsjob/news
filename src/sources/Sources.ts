@@ -1,10 +1,10 @@
 /** @format */
 
-import { ISource, IArticle } from "@/sources/types";
-import { BaseSource } from "@/sources/BaseSource";
-import { DvpToSource } from "@/sources/DvpToSource";
-import { TelegramSource } from "@/sources/TelegramSource";
-import { colorizedConsole } from "@/helpers/console";
+import { ISource, IArticle } from "./types";
+import { BaseSource } from "./BaseSource";
+import { DvpToSource } from "./DvpToSource";
+import { TelegramSource } from "./TelegramSource";
+import { colorizedConsole } from "../helpers/console";
 
 export class Sources {
   private sources: Map<string, ISource> = new Map();
@@ -19,7 +19,6 @@ export class Sources {
       const dvpSource = new DvpToSource();
       this.sources.set(dvpSource.name, dvpSource);
 
-      // Initialize Telegram source with a sample channel
       const telegramChannels = ["tproger_web"];
       const telegramSource = new TelegramSource(telegramChannels);
       this.sources.set(telegramSource.name, telegramSource);

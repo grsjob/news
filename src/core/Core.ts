@@ -6,18 +6,19 @@ import { LLMProcessor } from "@/services/llm";
 import { ICore, ICoreConfig, INotificationService } from "./types";
 import { ILLMResult, IArticle } from "@/services/llm";
 import { ArticlesDB } from "@/db/articles.db";
+import { NotificationService } from "@/services/notification";
 
 export class Core implements ICore {
   private sources: Sources;
   private llmProcessor: LLMProcessor;
-  private notificationService?: INotificationService;
+  private notificationService?: NotificationService;
   private config: ICoreConfig;
   private initialized: boolean = false;
   private articlesDB: ArticlesDB;
 
   constructor(config: ICoreConfig) {
     this.config = config;
-    this.sources = new Sources();
+    this.sources = new Sources(config.sources || { groups: [] });
     this.llmProcessor = new LLMProcessor(config.llm);
     this.articlesDB = new ArticlesDB();
   }
@@ -67,15 +68,36 @@ export class Core implements ICore {
     return this._fetchAndProcessNewsInternal(limit);
   }
 
-  private async _fetchAndProcessNewsInternal(
+  public async fetchAndProcessNewsByGroup(
+    groupId: string,
     limit?: number
+  ): Promise<ILLMResult[]> {
+    if (!this.initialized) {
+      throw new Error("Core is not initialized");
+    }
+
+    return this._fetchAndProcessNewsInternal(limit, groupId);
+  }
+
+  private async _fetchAndProcessNewsInternal(
+    limit?: number,
+    sourceGroupId?: string
   ): Promise<ILLMResult[]> {
     try {
       colorizedConsole.accept("Starting news processing...");
 
-      const articles = await this.sources.fetchAllArticles(
-        limit || this.config.sources?.defaultLimit
-      );
+      let articles: IArticle[] = [];
+
+      if (sourceGroupId) {
+        articles = await this.sources.fetchArticlesFromGroup(
+          sourceGroupId,
+          limit || this.getDefaultLimit()
+        );
+      } else {
+        articles = await this.sources.fetchAllArticles(
+          limit || this.getDefaultLimit()
+        );
+      }
 
       if (!articles.length) {
         colorizedConsole.warn("No articles found to process");
@@ -113,7 +135,14 @@ export class Core implements ICore {
 
       if (this.notificationService && processedResults.length > 0) {
         try {
-          await this.notificationService.sendResults(processedResults);
+          if (sourceGroupId) {
+            await this.sendResultsToMatchingNotificationGroups(
+              sourceGroupId,
+              processedResults
+            );
+          } else {
+            await this.notificationService.sendResults(processedResults);
+          }
 
           for (const result of processedResults) {
             await this.articlesDB.markArticleAsSent(result.url);
@@ -134,6 +163,39 @@ export class Core implements ICore {
       colorizedConsole.err(`Error in fetchAndProcessNews: ${error}`);
       throw error;
     }
+  }
+
+  private async sendResultsToMatchingNotificationGroups(
+    sourceGroupId: string,
+    results: ILLMResult[]
+  ): Promise<void> {
+    if (!this.notificationService) {
+      return;
+    }
+
+    const notificationGroups = this.notificationService.getNotificationGroups();
+
+    for (const notificationGroup of notificationGroups) {
+      if (notificationGroup.sourceGroups.includes(sourceGroupId)) {
+        try {
+          await this.notificationService.sendResultsToGroup(
+            notificationGroup.id,
+            results
+          );
+          colorizedConsole.accept(
+            `Sent results to notification group: ${notificationGroup.name}`
+          );
+        } catch (error) {
+          colorizedConsole.err(
+            `Failed to send results to notification group ${notificationGroup.name}: ${error}`
+          );
+        }
+      }
+    }
+  }
+
+  private getDefaultLimit(): number {
+    return this.config.sources?.groups[0]?.sources[0]?.limit || 10;
   }
 
   private async generateMissingTitles(
@@ -168,7 +230,7 @@ export class Core implements ICore {
   }
 
   public setNotificationService(
-    notificationService: INotificationService
+    notificationService: NotificationService
   ): void {
     this.notificationService = notificationService;
     colorizedConsole.accept("Notification service set");
@@ -184,5 +246,13 @@ export class Core implements ICore {
       sourcesCount: this.sources.getSources().length,
       isInitialized: this.initialized,
     };
+  }
+
+  public getSourceGroups() {
+    return this.sources.getSourceGroups();
+  }
+
+  public getNotificationGroups() {
+    return this.notificationService?.getNotificationGroups() || [];
   }
 }

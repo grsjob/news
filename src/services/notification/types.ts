@@ -29,3 +29,15 @@ export interface INotificationConfig {
   telegram?: ITelegramConfig;
   enabled: boolean;
 }
+
+export interface INotificationGroup {
+  id: string;
+  name: string;
+  config: INotificationConfig;
+  sourceGroups: string[];
+}
+
+export interface INotificationGroupConfig {
+  groups: INotificationGroup[];
+  defaultGroupId?: string;
+}

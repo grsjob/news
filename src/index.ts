@@ -60,25 +60,57 @@ app.listen(PORT, async () => {
         presencePenalty: 0,
         topP: 0.95,
       },
+      sources: {
+        groups: [
+          {
+            id: "frontend",
+            name: "Frontend News",
+            enabled: true,
+            sources: [
+              {
+                name: "dvp-frontend",
+                type: "dvp" as const,
+                tags: ["javascript", "react", "typescript"],
+              },
+              {
+                name: "telegram-frontend",
+                type: "telegram" as const,
+                channels: ["tproger_web", "webstandards_ru"],
+              },
+            ],
+          },
+        ],
+        defaultGroupId: "frontend",
+      },
+      notifications: {
+        groups: [
+          {
+            id: "frontend-notifications",
+            name: "Frontend Notifications",
+            config: {
+              enabled: process.env.FRONTEND_NOTIFICATIONS_ENABLED !== "false",
+              telegram:
+                process.env.FRONTEND_TELEGRAM_BOT_TOKEN &&
+                process.env.FRONTEND_TELEGRAM_CHAT_ID
+                  ? {
+                      botToken: process.env.FRONTEND_TELEGRAM_BOT_TOKEN,
+                      chatId: process.env.FRONTEND_TELEGRAM_CHAT_ID,
+                    }
+                  : undefined,
+            },
+            sourceGroups: ["frontend"],
+          },
+        ],
+        defaultGroupId: "frontend-notifications",
+      },
     };
 
     const core = new Core(coreConfig);
 
-    const notificationConfig = {
-      enabled: process.env.NOTIFICATIONS_ENABLED === "true",
-      telegram:
-        process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID
-          ? {
-              botToken: process.env.TELEGRAM_BOT_TOKEN,
-              chatId: process.env.TELEGRAM_CHAT_ID,
-            }
-          : undefined,
-    };
-
-    if (notificationConfig.enabled) {
-      const notificationService = new NotificationService(notificationConfig);
-      core.setNotificationService(notificationService);
-    }
+    const notificationService = new NotificationService(
+      coreConfig.notifications!,
+    );
+    core.setNotificationService(notificationService);
 
     await core.initialize();
 

@@ -8,16 +8,24 @@ import axiosInstance from "@/config/axios";
 export class DvpToSource extends BaseSource {
   readonly name = "DvpTo";
   readonly baseUrl = "https://dev.to/api/articles/latest";
+  private tags: string[] = ["javascript", "react", "typescript"];
+
+  constructor(tags?: string[]) {
+    super();
+    if (tags && tags.length > 0) {
+      this.tags = tags;
+    }
+  }
 
   async fetchArticles(limit?: number): Promise<string> {
     try {
       const queryParams = new URLSearchParams({
         page: "1",
-        tag: "javascript",
       });
 
-      queryParams.append("tag", "react");
-      queryParams.append("tag", "typescript");
+      for (const tag of this.tags) {
+        queryParams.append("tag", tag);
+      }
 
       if (limit !== undefined) {
         queryParams.append("per_page", limit.toString());

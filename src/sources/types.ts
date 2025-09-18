@@ -1,3 +1,5 @@
+/** @format */
+
 export interface ISource {
   readonly name: string;
   readonly baseUrl: string;
@@ -14,4 +16,24 @@ export interface IArticle {
   source: string;
   publishedAt: Date;
   tags?: string[];
+}
+
+export interface ISourceConfig {
+  name: string;
+  type: "dvp" | "telegram";
+  channels?: string[];
+  tags?: string[];
+  limit?: number;
+}
+
+export interface ISourceGroup {
+  id: string;
+  name: string;
+  sources: ISourceConfig[];
+  enabled: boolean;
+}
+
+export interface ISourceGroupConfig {
+  groups: ISourceGroup[];
+  defaultGroupId?: string;
 }

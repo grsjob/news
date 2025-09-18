@@ -48,7 +48,7 @@ export class Core implements ICore {
     }
   }
 
-  public async cleanupOldArticles(days: number = 30): Promise<number> {
+  public async cleanupOldArticles(days: number = 7): Promise<number> {
     try {
       const deletedCount = await this.articlesDB.deleteOldArticles(days);
       colorizedConsole.accept(`Cleaned up ${deletedCount} old articles`);

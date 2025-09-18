@@ -46,7 +46,7 @@ export class SchedulerService implements ISchedulerService {
 
   public async runScheduledTask(): Promise<void> {
     try {
-      const deletedCount = await this.core.cleanupOldArticles(30);
+      const deletedCount = await this.core.cleanupOldArticles(7);
       colorizedConsole.accept(
         `Cleaned up ${deletedCount} old articles during scheduled task`,
       );

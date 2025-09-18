@@ -56,7 +56,7 @@ app.listen(PORT, async () => {
           process.env.LLM_BASE_URL ||
           "https://foundation-models.api.cloud.ru/v1",
         maxTokens: 5000,
-        temperature: 0.5,
+        temperature: 0.85,
         presencePenalty: 0,
         topP: 0.95,
       },

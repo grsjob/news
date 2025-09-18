@@ -46,14 +46,21 @@ export class TelegramSource extends BaseSource {
     const articles: IArticle[] = [];
 
     try {
-      const yesterday = new Date();
-      yesterday.setDate(yesterday.getDate() - 1);
-      yesterday.setHours(0, 0, 0, 0);
+      const now = new Date();
+      const moscowTime = new Date(
+        now.toLocaleString("en-US", { timeZone: "Europe/Moscow" })
+      );
 
-      const tomorrow = new Date(yesterday);
-      tomorrow.setDate(tomorrow.getDate() + 1);
+      const startOfDay = new Date(moscowTime);
+      startOfDay.setHours(0, 0, 0, 0);
 
-      const rssUrl = `https://t.me/s/${channel}?before=${Math.floor(tomorrow.getTime() / 1000)}&after=${Math.floor(yesterday.getTime() / 1000)}`;
+      const endOfDay = new Date(moscowTime);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const startTime = Math.floor(startOfDay.getTime() / 1000);
+      const endTime = Math.floor(endOfDay.getTime() / 1000);
+
+      const rssUrl = `https://t.me/s/${channel}?before=${endTime}&after=${startTime}`;
 
       const response = await axios.get(rssUrl);
 
@@ -75,12 +82,13 @@ export class TelegramSource extends BaseSource {
 
     try {
       const postRegex =
-        /<div class="tgme_widget_message[^"]*"[^>]*data-post="([^"]+)"[^>]*>[\s\S]*?<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/g;
+        /<div class="tgme_widget_message[^"]*"[^>]*data-post="([^"]+)"[^>]*>[\s\S]*?(?:<time[^>]*datetime="([^"]*)"[^>]*>[^<]*<\/time>)?[\s\S]*?<div class="tgme_widget_message_text[^"]*"[^>]*>([\s\S]*?)<\/div>/g;
 
       let match;
       while ((match = postRegex.exec(html)) !== null) {
         const postId = match[1];
-        const content = match[2];
+        const publishTime = match[2];
+        const content = match[3];
 
         const cleanContent = content
           .replace(/<[^>]*>/g, "")
@@ -93,7 +101,7 @@ export class TelegramSource extends BaseSource {
             content: cleanContent,
             url: `https://t.me/${postId}`,
             source: this.name,
-            publishedAt: new Date(),
+            publishedAt: publishTime ? new Date(publishTime) : new Date(),
           };
 
           articles.push(article);

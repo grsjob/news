@@ -127,7 +127,7 @@ export class Core implements ICore {
       );
 
       const processedResults =
-        await this.llmProcessor.processArticles(articlesWithTitle);
+        await this.llmProcessor.processArticles(uniqueArticles);
 
       colorizedConsole.accept(
         `Successfully processed ${processedResults.length} articles`

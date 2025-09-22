@@ -10,10 +10,14 @@ export class TelegramSource extends BaseSource {
   readonly baseUrl = "https://t.me/";
 
   private channels: string[] = [];
+  private lookBackDays: number = 1;
 
-  constructor(channels: string[]) {
+  constructor(channels: string[], lookBackDays?: number) {
     super();
     this.channels = channels;
+    if (lookBackDays !== undefined && lookBackDays > 0) {
+      this.lookBackDays = lookBackDays;
+    }
   }
 
   async fetchArticles(limit?: number): Promise<string> {
@@ -51,23 +55,34 @@ export class TelegramSource extends BaseSource {
         now.toLocaleString("en-US", { timeZone: "Europe/Moscow" })
       );
 
-      const startOfDay = new Date(moscowTime);
-      startOfDay.setHours(0, 0, 0, 0);
+      for (let i = 0; i < this.lookBackDays; i++) {
+        const targetDate = new Date(moscowTime);
+        targetDate.setDate(targetDate.getDate() - i);
 
-      const endOfDay = new Date(moscowTime);
-      endOfDay.setHours(23, 59, 59, 999);
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
 
-      const startTime = Math.floor(startOfDay.getTime() / 1000);
-      const endTime = Math.floor(endOfDay.getTime() / 1000);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
 
-      const rssUrl = `https://t.me/s/${channel}?before=${endTime}&after=${startTime}`;
+        const startTime = Math.floor(startOfDay.getTime() / 1000);
+        const endTime = Math.floor(endOfDay.getTime() / 1000);
 
-      const response = await axios.get(rssUrl);
+        const rssUrl = `https://t.me/s/${channel}?before=${endTime}&after=${startTime}`;
 
-      if (response.status === 200) {
-        const html = response.data as string;
-        const posts = this.parseTelegramHTML(html, channel);
-        articles.push(...posts);
+        try {
+          const response = await axios.get(rssUrl);
+
+          if (response.status === 200) {
+            const html = response.data as string;
+            const posts = this.parseTelegramHTML(html, channel);
+            articles.push(...posts);
+          }
+        } catch (dayError) {
+          colorizedConsole.err(
+            `Error fetching posts from ${channel} for ${targetDate.toDateString()}: ${dayError}`
+          );
+        }
       }
 
       return articles;

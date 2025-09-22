@@ -38,7 +38,10 @@ class SourceGroup {
               );
               continue;
             }
-            source = new TelegramSource(sourceConfig.channels);
+            source = new TelegramSource(
+              sourceConfig.channels,
+              sourceConfig.lookBackDays
+            );
             break;
           default:
             colorizedConsole.err(`Unknown source type: ${sourceConfig.type}`);

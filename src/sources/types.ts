@@ -24,6 +24,7 @@ export interface ISourceConfig {
   channels?: string[];
   tags?: string[];
   limit?: number;
+  lookBackDays?: number;
 }
 
 export interface ISourceGroup {

@@ -80,6 +80,17 @@ app.listen(PORT, async () => {
               },
             ],
           },
+          {
+            id: "financial",
+            name: "Financial News",
+            enabled: true,
+            sources: [
+              {
+                name: "duma-financial",
+                type: "financial" as const,
+              },
+            ],
+          },
         ],
         defaultGroupId: "frontend",
       },
@@ -100,6 +111,22 @@ app.listen(PORT, async () => {
                   : undefined,
             },
             sourceGroups: ["frontend"],
+          },
+          {
+            id: "financial-notifications",
+            name: "Financial Notifications",
+            config: {
+              enabled: process.env.FINANCIAL_NOTIFICATIONS_ENABLED !== "false",
+              telegram:
+                process.env.FINANCIAL_TELEGRAM_BOT_TOKEN &&
+                process.env.FINANCIAL_TELEGRAM_CHAT_ID
+                  ? {
+                      botToken: process.env.FINANCIAL_TELEGRAM_BOT_TOKEN,
+                      chatId: process.env.FINANCIAL_TELEGRAM_CHAT_ID,
+                    }
+                  : undefined,
+            },
+            sourceGroups: ["financial"],
           },
         ],
         defaultGroupId: "frontend-notifications",

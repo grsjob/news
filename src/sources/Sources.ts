@@ -10,6 +10,7 @@ import {
 import { BaseSource } from "./BaseSource";
 import { DvpToSource } from "./DvpToSource";
 import { TelegramSource } from "./TelegramSource";
+import { FinancialSource } from "./FinancialSource";
 import { colorizedConsole } from "../helpers/console";
 
 class SourceGroup {
@@ -42,6 +43,9 @@ class SourceGroup {
               sourceConfig.channels,
               sourceConfig.lookBackDays
             );
+            break;
+          case "financial":
+            source = new FinancialSource();
             break;
           default:
             colorizedConsole.err(`Unknown source type: ${sourceConfig.type}`);

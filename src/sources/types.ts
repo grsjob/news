@@ -20,7 +20,7 @@ export interface IArticle {
 
 export interface ISourceConfig {
   name: string;
-  type: "dvp" | "telegram";
+  type: "dvp" | "telegram" | "financial";
   channels?: string[];
   tags?: string[];
   limit?: number;

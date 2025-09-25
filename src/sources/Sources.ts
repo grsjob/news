@@ -11,6 +11,7 @@ import { BaseSource } from "./BaseSource";
 import { DvpToSource } from "./DvpToSource";
 import { TelegramSource } from "./TelegramSource";
 import { FinancialSource } from "./FinancialSource";
+import { RosneftRSSSource } from "./RosneftRSSSource";
 import { colorizedConsole } from "../helpers/console";
 
 class SourceGroup {
@@ -35,17 +36,26 @@ class SourceGroup {
           case "telegram":
             if (!sourceConfig.channels || sourceConfig.channels.length === 0) {
               colorizedConsole.warn(
-                `No channels specified for Telegram source ${sourceConfig.name}`
+                `No channels specified for Telegram source ${sourceConfig.name}`,
               );
               continue;
             }
             source = new TelegramSource(
               sourceConfig.channels,
-              sourceConfig.lookBackDays
+              sourceConfig.lookBackDays,
             );
             break;
           case "financial":
             source = new FinancialSource();
+            break;
+          case "rss":
+            if (!sourceConfig.rssUrl) {
+              colorizedConsole.warn(
+                `No RSS URL specified for RSS source ${sourceConfig.name}`,
+              );
+              continue;
+            }
+            source = new RosneftRSSSource();
             break;
           default:
             colorizedConsole.err(`Unknown source type: ${sourceConfig.type}`);
@@ -57,11 +67,11 @@ class SourceGroup {
 
       this.initialized = true;
       colorizedConsole.accept(
-        `Initialized ${this.sources.size} sources for group ${this.config.name}`
+        `Initialized ${this.sources.size} sources for group ${this.config.name}`,
       );
     } catch (error) {
       colorizedConsole.err(
-        `Error initializing sources for group ${this.config.name}: ${error}`
+        `Error initializing sources for group ${this.config.name}: ${error}`,
       );
       throw error;
     }
@@ -80,7 +90,7 @@ class SourceGroup {
     const fetchPromises: Promise<void>[] = [];
 
     colorizedConsole.accept(
-      `Fetching articles from ${this.sources.size} sources in group ${this.config.name}...`
+      `Fetching articles from ${this.sources.size} sources in group ${this.config.name}...`,
     );
 
     for (const [sourceName, source] of this.sources) {
@@ -88,7 +98,7 @@ class SourceGroup {
         (async () => {
           try {
             colorizedConsole.accept(
-              `Fetching articles from ${sourceName} in group ${this.config.name}...`
+              `Fetching articles from ${sourceName} in group ${this.config.name}...`,
             );
             const articlesData = await source.fetchArticles(limit);
 
@@ -111,23 +121,23 @@ class SourceGroup {
                 }
               } catch (parseError) {
                 colorizedConsole.err(
-                  `Error parsing articles from ${sourceName} in group ${this.config.name}: ${parseError}`
+                  `Error parsing articles from ${sourceName} in group ${this.config.name}: ${parseError}`,
                 );
               }
             }
           } catch (error) {
             colorizedConsole.err(
-              `Error fetching articles from ${sourceName} in group ${this.config.name}: ${error}`
+              `Error fetching articles from ${sourceName} in group ${this.config.name}: ${error}`,
             );
           }
-        })()
+        })(),
       );
     }
 
     await Promise.all(fetchPromises);
 
     colorizedConsole.accept(
-      `Successfully fetched ${allArticles.length} articles from group ${this.config.name}`
+      `Successfully fetched ${allArticles.length} articles from group ${this.config.name}`,
     );
     return allArticles;
   }
@@ -165,7 +175,7 @@ export class Sources {
         }
       }
       colorizedConsole.accept(
-        `Initialized ${this.sourceGroups.size} source groups`
+        `Initialized ${this.sourceGroups.size} source groups`,
       );
     } catch (error) {
       colorizedConsole.err(`Error initializing source groups: ${error}`);
@@ -206,10 +216,10 @@ export class Sources {
               allArticles.push(...articles);
             } catch (error) {
               colorizedConsole.err(
-                `Error fetching articles from group ${groupId}: ${error}`
+                `Error fetching articles from group ${groupId}: ${error}`,
               );
             }
-          })()
+          })(),
         );
       }
     }
@@ -217,14 +227,14 @@ export class Sources {
     await Promise.all(fetchPromises);
 
     colorizedConsole.accept(
-      `Successfully fetched ${allArticles.length} articles from all source groups`
+      `Successfully fetched ${allArticles.length} articles from all source groups`,
     );
     return allArticles;
   }
 
   public async fetchArticlesFromGroup(
     groupId: string,
-    limit?: number
+    limit?: number,
   ): Promise<IArticle[]> {
     const group = this.sourceGroups.get(groupId);
 
@@ -253,7 +263,7 @@ export class Sources {
 
   public updateGroupConfig(
     groupId: string,
-    config: Partial<ISourceGroup>
+    config: Partial<ISourceGroup>,
   ): void {
     const group = this.sourceGroups.get(groupId);
     if (group) {

@@ -25,7 +25,7 @@ export class SchedulerService implements ISchedulerService {
       //9 утра по Москве
       this.task = cron.schedule(this.config.scheduleTime, async () => {
         colorizedConsole.accept(
-          "Running scheduled task: Fetch articles and cleanup",
+          "Running scheduled task: Fetch articles and cleanup"
         );
         await this.runScheduledTask();
       });
@@ -48,13 +48,32 @@ export class SchedulerService implements ISchedulerService {
     try {
       const deletedCount = await this.core.cleanupOldArticles(7);
       colorizedConsole.accept(
-        `Cleaned up ${deletedCount} old articles during scheduled task`,
+        `Cleaned up ${deletedCount} old articles during scheduled task`
       );
 
-      const results = await this.core.fetchAndProcessNews();
+      const sourceGroups = this.core.getSourceGroups();
+      let totalProcessed = 0;
+
+      for (const sourceGroup of sourceGroups) {
+        if (sourceGroup.isEnabled()) {
+          colorizedConsole.accept(
+            `Processing source group: ${sourceGroup.getName()}`
+          );
+
+          const results = await this.core.fetchAndProcessNewsByGroup(
+            sourceGroup.getId()
+          );
+
+          totalProcessed += results.length;
+
+          colorizedConsole.accept(
+            `Completed processing source group ${sourceGroup.getName()}: ${results.length} articles processed`
+          );
+        }
+      }
 
       colorizedConsole.accept(
-        `Scheduled task completed: ${results.length} new articles processed`,
+        `Scheduled task completed: ${totalProcessed} new articles processed across all source groups`
       );
     } catch (error) {
       colorizedConsole.err(`Error in scheduled task: ${error}`);

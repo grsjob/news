@@ -89,6 +89,11 @@ app.listen(PORT, async () => {
                 name: "duma-financial",
                 type: "financial" as const,
               },
+              {
+                name: "rosneft-rss",
+                type: "rss" as const,
+                rssUrl: "https://www.rosneft.ru/press/news/rss/",
+              },
             ],
           },
         ],

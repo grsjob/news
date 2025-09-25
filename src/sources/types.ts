@@ -20,7 +20,8 @@ export interface IArticle {
 
 export interface ISourceConfig {
   name: string;
-  type: "dvp" | "telegram" | "financial";
+  type: "dvp" | "telegram" | "financial" | "rss";
+  rssUrl?: string;
   channels?: string[];
   tags?: string[];
   limit?: number;

@@ -39,7 +39,18 @@ export class Core implements ICore {
 
       await this.cleanupOldArticles();
 
-      await this._fetchAndProcessNewsInternal();
+      const sourceGroups = this.sources.getSourceGroups();
+      for (const sourceGroup of sourceGroups) {
+        if (sourceGroup.isEnabled()) {
+          colorizedConsole.accept(
+            `Initializing source group: ${sourceGroup.getName()}`,
+          );
+          await this._fetchAndProcessNewsInternal(
+            this.getDefaultLimit(),
+            sourceGroup.getId(),
+          );
+        }
+      }
 
       colorizedConsole.accept("Core initialized successfully");
       this.initialized = true;
@@ -70,7 +81,7 @@ export class Core implements ICore {
 
   public async fetchAndProcessNewsByGroup(
     groupId: string,
-    limit?: number
+    limit?: number,
   ): Promise<ILLMResult[]> {
     if (!this.initialized) {
       throw new Error("Core is not initialized");
@@ -81,7 +92,7 @@ export class Core implements ICore {
 
   private async _fetchAndProcessNewsInternal(
     limit?: number,
-    sourceGroupId?: string
+    sourceGroupId?: string,
   ): Promise<ILLMResult[]> {
     try {
       colorizedConsole.accept("Starting news processing...");
@@ -91,11 +102,11 @@ export class Core implements ICore {
       if (sourceGroupId) {
         articles = await this.sources.fetchArticlesFromGroup(
           sourceGroupId,
-          limit || this.getDefaultLimit()
+          limit || this.getDefaultLimit(),
         );
       } else {
         articles = await this.sources.fetchAllArticles(
-          limit || this.getDefaultLimit()
+          limit || this.getDefaultLimit(),
         );
       }
 
@@ -123,14 +134,14 @@ export class Core implements ICore {
       }
 
       colorizedConsole.accept(
-        `Fetched ${articles.length} articles, ${uniqueArticles.length} are unique`
+        `Fetched ${articles.length} articles, ${uniqueArticles.length} are unique`,
       );
 
       const processedResults =
         await this.llmProcessor.processArticles(uniqueArticles);
 
       colorizedConsole.accept(
-        `Successfully processed ${processedResults.length} articles`
+        `Successfully processed ${processedResults.length} articles`,
       );
 
       if (this.notificationService && processedResults.length > 0) {
@@ -138,7 +149,7 @@ export class Core implements ICore {
           if (sourceGroupId) {
             await this.sendResultsToMatchingNotificationGroups(
               sourceGroupId,
-              processedResults
+              processedResults,
             );
           } else {
             await this.notificationService.sendResults(processedResults);
@@ -149,11 +160,11 @@ export class Core implements ICore {
           }
 
           colorizedConsole.accept(
-            "Notifications sent successfully and articles marked as sent"
+            "Notifications sent successfully and articles marked as sent",
           );
         } catch (notificationError) {
           colorizedConsole.err(
-            `Failed to send notifications: ${notificationError}`
+            `Failed to send notifications: ${notificationError}`,
           );
         }
       }
@@ -167,7 +178,7 @@ export class Core implements ICore {
 
   private async sendResultsToMatchingNotificationGroups(
     sourceGroupId: string,
-    results: ILLMResult[]
+    results: ILLMResult[],
   ): Promise<void> {
     if (!this.notificationService) {
       return;
@@ -175,31 +186,47 @@ export class Core implements ICore {
 
     const notificationGroups = this.notificationService.getNotificationGroups();
 
+    colorizedConsole.accept(
+      `Looking for notification groups that match source group: ${sourceGroupId}`,
+    );
+
     for (const notificationGroup of notificationGroups) {
+      colorizedConsole.accept(
+        `Checking notification group: ${notificationGroup.name} with sourceGroups: ${JSON.stringify(notificationGroup.sourceGroups)}`,
+      );
+
       if (notificationGroup.sourceGroups.includes(sourceGroupId)) {
+        colorizedConsole.accept(
+          `Match found! Sending results to notification group: ${notificationGroup.name}`,
+        );
+
         try {
           await this.notificationService.sendResultsToGroup(
             notificationGroup.id,
-            results
+            results,
           );
           colorizedConsole.accept(
-            `Sent results to notification group: ${notificationGroup.name}`
+            `Successfully sent results to notification group: ${notificationGroup.name}`,
           );
         } catch (error) {
           colorizedConsole.err(
-            `Failed to send results to notification group ${notificationGroup.name}: ${error}`
+            `Failed to send results to notification group ${notificationGroup.name}: ${error}`,
           );
         }
+      } else {
+        colorizedConsole.accept(
+          `No match for notification group: ${notificationGroup.name}`,
+        );
       }
     }
   }
 
   private getDefaultLimit(): number {
-    return this.config.sources?.groups[0]?.sources[0]?.limit || 10;
+    return this.config.sources?.groups[0]?.sources[0]?.limit || 50;
   }
 
   private async generateMissingTitles(
-    articles: IArticle[]
+    articles: IArticle[],
   ): Promise<IArticle[]> {
     const articlesWithTitle: IArticle[] = [];
 
@@ -207,7 +234,7 @@ export class Core implements ICore {
       if (!article.title || article.title.trim() === "") {
         try {
           colorizedConsole.accept(
-            `Generating title for article from ${article.source}`
+            `Generating title for article from ${article.source}`,
           );
           const generatedTitle = await this.llmProcessor.generateTitle(article);
           articlesWithTitle.push({
@@ -230,7 +257,7 @@ export class Core implements ICore {
   }
 
   public setNotificationService(
-    notificationService: NotificationService
+    notificationService: NotificationService,
   ): void {
     this.notificationService = notificationService;
     colorizedConsole.accept("Notification service set");

@@ -4,7 +4,6 @@ import { colorizedConsole } from "../helpers/console";
 import { Pool } from "pg";
 import dotenv from "dotenv";
 
-// Load environment variables from .env file
 dotenv.config();
 
 export const pool = new Pool({

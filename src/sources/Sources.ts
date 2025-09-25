@@ -1,13 +1,6 @@
 /** @format */
 
-import {
-  ISource,
-  IArticle,
-  ISourceGroupConfig,
-  ISourceConfig,
-  ISourceGroup,
-} from "./types";
-import { BaseSource } from "./BaseSource";
+import { ISource, IArticle, ISourceGroupConfig, ISourceGroup } from "./types";
 import { DvpToSource } from "./DvpToSource";
 import { TelegramSource } from "./TelegramSource";
 import { FinancialSource } from "./FinancialSource";
